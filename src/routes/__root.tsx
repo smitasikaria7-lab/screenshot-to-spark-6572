@@ -11,6 +11,7 @@ import {
 import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
+import { SiteHeader, SiteFooter, WhatsAppFloat } from "@/components/site/Layout";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
 function NotFoundComponent() {
@@ -78,16 +79,26 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "Ancon Interio | Premium Interior Designer in Guwahati, Assam" },
+      { name: "description", content: "Ancon Interio offers premium residential and commercial interior design, renovation, turnkey solutions, 2D layouts, 3D visualization and MahaVastu consultancy in Guwahati, Assam." },
+      { name: "author", content: "Ancon Interio" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
     ],
+    scripts: [{
+      type: "application/ld+json",
+      children: JSON.stringify({
+        "@context": "https://schema.org", "@type": "InteriorDesigner", name: "Ancon Interio",
+        founder: { "@type": "Person", name: "Smithaa Bidawatka" }, foundingDate: "2013",
+        telephone: "+91-6003910929", slogan: "Design with Energy, Decorate with Purpose.",
+        address: { "@type": "PostalAddress", addressLocality: "Guwahati", addressRegion: "Assam", addressCountry: "IN" },
+        areaServed: "Guwahati, Assam", sameAs: ["https://instagram.com/ancon_interio"],
+      }),
+    }],
     links: [
+      { rel: "preconnect", href: "https://fonts.googleapis.com" },
+      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
+      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,400&family=Jost:wght@300;400;500&display=swap" },
       {
         rel: "stylesheet",
         href: appCss,
@@ -121,7 +132,10 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
+      <SiteHeader />
+      <main><Outlet /></main>
+      <SiteFooter />
+      <WhatsAppFloat />
     </QueryClientProvider>
   );
 }
