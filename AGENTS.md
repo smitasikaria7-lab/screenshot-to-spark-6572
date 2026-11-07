@@ -28,3 +28,5 @@ use the editor.
   own key and store it in Secrets.
 - **Secrets.** Lovable manages them. Do not put secret values in the repo.
 <!-- LOVABLE:END -->
+
+- Public admin sample credentials open an isolated read-only demo; they must never authenticate against Cloud or grant live-data access.
