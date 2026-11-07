@@ -25,8 +25,8 @@ export const Route = createFileRoute("/portfolio/$slug")({
 function ProjectPage() {
   const { slug } = Route.useLoaderData();
   const idx = projects.findIndex((x) => x.slug === slug);
-  const p = projects[idx];
-  const next = projects[(idx + 1) % projects.length];
+  const p = projects[idx]!;
+  const next = projects[(idx + 1) % projects.length]!;
   return (
     <>
       <PageHero eyebrow={p.categories.join(" · ")} title={p.title} img={p.cover} />
