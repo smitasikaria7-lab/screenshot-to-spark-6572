@@ -1,4 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ArrowUpRight, CalendarDays, CheckCircle2, Clock3, FileText, FolderKanban,
@@ -6,8 +7,21 @@ import {
   Search, Trash2, Truck, Users, UserRound, X,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { demoAdmin, demoProjects, isDemoLogin } from "@/lib/admin-demo";
 
-export const Route = createFileRoute("/admin")({ component: AdminPage });
+export const Route = createFileRoute("/admin")({
+  head: () => ({ meta: [
+    { title: "Studio Admin Login | Ancon Interio" },
+    { name: "description", content: "Sign in to the Ancon Interio studio workspace or explore the read-only sample." },
+    { property: "og:title", content: "Studio Admin Login | Ancon Interio" },
+    { property: "og:description", content: "Ancon Interio studio administration and sample workspace." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+    { name: "robots", content: "noindex, nofollow" },
+  ] }),
+  component: AdminPage,
+});
 
 type Field = { key: string; label: string; type?: string; required?: boolean; options?: string[] };
 type ModuleKey = "projects" | "leads" | "sales" | "quotations" | "team" | "vendors";
@@ -89,6 +103,9 @@ const readableDate = (value: unknown) => value ? new Date(String(value)).toLocal
 const db = supabase as unknown as { from: (table: string) => any; auth: typeof supabase.auth; rpc: (fn: string) => Promise<{ data: unknown; error: { message: string } | null }> };
 
 function AdminPage() {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [demo, setDemo] = useState(false);
   const [session, setSession] = useState<any>(null);
   const [authChecked, setAuthChecked] = useState(false);
   const [authorized, setAuthorized] = useState(false);
@@ -127,14 +144,16 @@ function AdminPage() {
   }, [verify]);
 
   const loadCounts = useCallback(async () => {
+    if (demo) { setCounts({ projects: 1, leads: 0, sales: 0, quotations: 0, team: 0, vendors: 0 }); return; }
     const pairs = await Promise.all(Object.entries(modules).map(async ([key, config]) => {
       const { count, error } = await db.from(config.table).select("id", { count: "exact", head: true });
       return [key, error ? 0 : (count ?? 0)] as const;
     }));
     setCounts(Object.fromEntries(pairs));
-  }, []);
+  }, [demo]);
 
   const loadRows = useCallback(async () => {
+    if (demo) { setRows(active === "projects" ? demoProjects : []); return; }
     if (active === "overview") {
       const { data } = await db.from("contact_submissions").select("*").order("created_at", { ascending: false }).limit(6);
       setRows((data ?? []) as RowData[]);
@@ -145,11 +164,11 @@ function AdminPage() {
     const { data, error } = await db.from(config.table).select("*").order(sortKey, { ascending: false });
     if (error) { setNotice(error.message); setRows([]); return; }
     setRows((data ?? []) as RowData[]);
-  }, [active]);
+  }, [active, demo]);
 
   useEffect(() => {
-    if (authorized) { void loadCounts(); void loadRows(); }
-  }, [authorized, loadCounts, loadRows]);
+    if (authorized || demo) { void loadCounts(); void loadRows(); }
+  }, [authorized, demo, loadCounts, loadRows]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -169,6 +188,7 @@ function AdminPage() {
   }
   async function saveRecord(event: React.FormEvent) {
     event.preventDefault();
+    if (demo) { setNotice("Sample workspace is read-only. No changes were saved."); return; }
     if (active === "overview") return;
     setBusy(true); setNotice("");
     const config = modules[active];
@@ -186,6 +206,7 @@ function AdminPage() {
     await loadRows(); await loadCounts();
   }
   async function removeRecord(row: RowData) {
+    if (demo) { setNotice("Sample workspace is read-only. No records were deleted."); return; }
     if (active === "overview" || !window.confirm("Delete this record? This cannot be undone.")) return;
     const { error } = await db.from(modules[active].table).delete().eq("id", row.id);
     if (error) setNotice(error.message);
@@ -193,14 +214,24 @@ function AdminPage() {
   }
   async function signIn(event: React.FormEvent) {
     event.preventDefault(); setBusy(true); setAuthError("");
+    if (isDemoLogin(email, password)) { setDemo(true); setBusy(false); setRows([]); return; }
     const { data, error } = await db.auth.signInWithPassword({ email, password });
     setBusy(false);
     if (error) setAuthError(error.message);
     else { setSession(data.session); await verify(data.session); }
   }
 
+  async function signOut() {
+    await queryClient.cancelQueries();
+    queryClient.clear();
+    setRows([]); setCounts({}); setAuthorized(false); setDemo(false); setModalOpen(false);
+    setActive("overview"); setPassword(""); setNotice("");
+    if (!demo) { await db.auth.signOut(); setSession(null); }
+    await navigate({ to: "/admin", replace: true });
+  }
+
   if (!authChecked) return <div className="flex min-h-screen items-center justify-center bg-[#f7f5f0]"><Loader2 className="h-6 w-6 animate-spin text-[#a88a50]" /></div>;
-  if (!session || !authorized) {
+  if (!demo && (!session || !authorized)) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-[#f7f5f0] px-5 py-12 text-[#24221f]">
         <div className="w-full max-w-md border border-[#e4ded2] bg-white p-8 shadow-sm sm:p-10">
@@ -212,14 +243,20 @@ function AdminPage() {
               <label className="block text-xs uppercase tracking-widest text-[#777168]">Email<input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="mt-2 w-full border border-[#ded8cc] bg-transparent px-3 py-3 text-sm normal-case tracking-normal outline-none focus:border-[#a88a50]" /></label>
               <label className="block text-xs uppercase tracking-widest text-[#777168]">Password<input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="mt-2 w-full border border-[#ded8cc] bg-transparent px-3 py-3 text-sm normal-case tracking-normal outline-none focus:border-[#a88a50]" /></label>
               {authError && <p className="text-sm text-red-700">{authError}</p>}
-              <button disabled={busy} className="flex w-full items-center justify-center gap-2 bg-[#24221f] px-5 py-3 text-xs uppercase tracking-[0.2em] text-white hover:bg-[#a88a50] disabled:opacity-60">{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Sign in"}</button>
+              <Button disabled={busy} className="w-full uppercase">{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Sign in"}</Button>
             </form>
           ) : (
             <div className="mt-8">
               <p className="text-sm text-red-700">This account does not have administrator access.</p>
-              <button onClick={() => void db.auth.signOut()} className="mt-5 border border-[#ded8cc] px-4 py-2 text-xs uppercase tracking-widest">Sign out</button>
+              <Button onClick={() => void signOut()} variant="outline" className="mt-5">Sign out</Button>
             </div>
           )}
+          <div className="mt-6 border-t border-border pt-5 text-sm text-muted-foreground">
+            <p className="font-medium text-foreground">Sample login · Read-only demo</p>
+            <p className="mt-2 break-all">Email: {demoAdmin.email}</p>
+            <p className="mt-1">Password: {demoAdmin.password}</p>
+            <Button variant="outline" className="mt-4 w-full" onClick={() => { setEmail(demoAdmin.email); setPassword(demoAdmin.password); setDemo(true); setRows([]); }}>Open sample workspace</Button>
+          </div>
           <a href="/" className="mt-8 inline-block text-xs text-[#777168] underline underline-offset-4">Back to website</a>
         </div>
       </main>
@@ -231,8 +268,7 @@ function AdminPage() {
     ...Object.entries(modules).map(([key, value]) => ({ key: key as ModuleKey, label: value.title, icon: value.icon })),
   ];
   const current = active === "overview" ? null : modules[active];
-  const totalSales = rows.reduce((sum, row) => sum + Number(row.amount ?? 0), 0);
-  const upcoming = rows.filter((row) => row.follow_up_at && String(row.follow_up_at) >= new Date().toISOString().slice(0, 10)).length;
+  const accountLabel = demo ? "Sample admin · Read-only" : session?.user?.email;
 
   return (
     <div className="min-h-screen bg-[#f7f5f0] text-[#282620]">

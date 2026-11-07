@@ -1,7 +1,8 @@
 import { Link } from "@tanstack/react-router";
-import { Menu, X, Instagram, Phone, MapPin } from "lucide-react";
+import { Menu, X, Instagram, Phone, MapPin, UserRound } from "lucide-react";
 import { useEffect, useState } from "react";
 import { INSTAGRAM, PHONE, whatsappUrl } from "@/lib/site";
+import { Button } from "@/components/ui/button";
 
 const nav = [
   { to: "/", label: "Home" },
@@ -28,7 +29,7 @@ export function SiteHeader() {
           <span className="block font-serif text-2xl tracking-[0.25em]">ANCON</span>
           <span className="block text-[0.6rem] tracking-[0.55em] text-gold">INTERIO</span>
         </Link>
-        <nav className="hidden items-center gap-8 lg:flex" aria-label="Main">
+        <nav className="hidden items-center gap-5 xl:gap-8 lg:flex" aria-label="Main">
           {nav.map((n) => (
             <Link key={n.to} to={n.to} activeOptions={{ exact: n.to === "/" }}
               className={`text-[0.72rem] uppercase tracking-[0.22em] transition-colors hover:text-gold ${scrolled ? "text-foreground" : "text-ivory"}`}
@@ -37,6 +38,7 @@ export function SiteHeader() {
             </Link>
           ))}
           <Link to="/contact" className={scrolled ? "btn-ink !py-3 !px-5" : "btn-gold !py-3 !px-5"}>Book Consultation</Link>
+          <Button asChild variant="ghost" size="sm" className={scrolled ? "text-foreground" : "text-ivory"}><Link to="/admin"><UserRound className="h-4 w-4" /> Admin Login</Link></Button>
         </nav>
         <button className={`lg:hidden ${scrolled || open ? "text-foreground" : "text-ivory"}`} onClick={() => setOpen(!open)} aria-label={open ? "Close menu" : "Open menu"} aria-expanded={open}>
           {open ? <X /> : <Menu />}
@@ -52,6 +54,7 @@ export function SiteHeader() {
             ))}
           </ul>
           <Link to="/contact" onClick={() => setOpen(false)} className="btn-ink mt-6">Book Consultation</Link>
+          <Button asChild variant="outline" className="mt-4 flex w-fit"><Link to="/admin" onClick={() => setOpen(false)}><UserRound className="h-4 w-4" /> Admin Login</Link></Button>
         </nav>
       )}
     </header>
