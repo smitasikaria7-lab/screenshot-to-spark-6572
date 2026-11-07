@@ -66,6 +66,30 @@ export function SiteFooter() {
           <p className="font-serif text-3xl tracking-[0.25em]">ANCON <span className="text-gold">INTERIO</span></p>
           <p className="mt-4 max-w-sm font-serif text-xl italic text-ivory/70">Design with Energy, Decorate with Purpose.</p>
           <p className="mt-6 text-sm text-ivory/60">Turning Houses into Dream Homes — since 2013.</p>
+          <div className="mt-8 max-w-md">
+            <p className="eyebrow mb-3">Visit Our Studio</p>
+            <p className="mb-3 text-sm text-ivory/75">Sample location: Bharalumukh, Guwahati, Assam</p>
+            <div className="overflow-hidden border border-ivory/15">
+              <iframe
+                title="Sample Ancon Interio studio location in Bharalumukh, Guwahati"
+                src="https://www.google.com/maps?q=Bharalumukh%2C%20Guwahati%2C%20Assam&output=embed"
+                width="100%"
+                height="180"
+                style={{ border: 0, display: "block" }}
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                allowFullScreen
+              />
+            </div>
+            <a
+              href="https://www.google.com/maps/search/?api=1&query=Bharalumukh%2C%20Guwahati%2C%20Assam"
+              target="_blank"
+              rel="noreferrer"
+              className="mt-3 inline-flex text-xs uppercase tracking-[0.18em] text-gold transition-colors hover:text-ivory"
+            >
+              Get Directions ↗
+            </a>
+          </div>
         </div>
         <div>
           <p className="eyebrow">Explore</p>
