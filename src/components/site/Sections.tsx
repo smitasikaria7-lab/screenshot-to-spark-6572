@@ -204,7 +204,7 @@ export function Process() {
         <SectionHeading eyebrow="How We Work" title="Our Design Process" />
         <ol className="relative mt-16 border-l border-border md:ml-6">
           {processSteps.map((s, i) => {
-            const Icon = stepIcons[i];
+            const Icon = stepIcons[i] ?? Compass;
             return (
               <Reveal key={s} delay={i * 60}>
                 <li className="relative grid gap-4 pb-12 pl-10 md:grid-cols-[120px_1fr] md:pl-16">
@@ -230,7 +230,7 @@ const placeholderTestimonials = [
 ];
 export function Testimonials() {
   const [i, setI] = useState(0);
-  const t = placeholderTestimonials[i];
+  const t = placeholderTestimonials[i]!;
   const n = placeholderTestimonials.length;
   return (
     <section className="bg-secondary py-28">
